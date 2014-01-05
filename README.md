@@ -18,15 +18,19 @@ There is a small test suite that I'm adding after the fact for more practice.
 The code was developed with interactive testing in GHCI.
 
 Here's an example of the simulation:
+
 ![Simulation](https://github.com/bobgru/wreath/blob/master/images/simulation.png?raw=true "Simulation")
 
 Here the same parameters are used to create the engineering drawing:
+
 ![Design](https://github.com/bobgru/wreath/blob/master/images/design.png?raw=true "Design")
 
 
 Here are instructions for stringing the lights, again from the same data:
+
 ![Walk](https://github.com/bobgru/wreath/blob/master/images/walk.png?raw=true "Walk")
 
 
 Here's an admittedly terrible photograph of the real artifact:
+
 ![Physical wreath](https://github.com/bobgru/wreath/blob/master/images/wreath-night.jpg?raw=true "Physical wreath")
