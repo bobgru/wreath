@@ -31,6 +31,8 @@ Here are instructions for stringing the lights, again from the same data:
 ![Walk](https://github.com/bobgru/wreath/blob/master/images/walk.png?raw=true "Walk")
 
 
-Here's an admittedly terrible photograph of the real artifact:
+Here's an admittedly terrible photograph of the real artifact, in which the
+colors you would really see are completely washed out, and the individual
+lights of the candle and flame that you would see are merged as a solid blob:
 
 ![Physical wreath](https://github.com/bobgru/wreath/blob/master/images/wreath-night.jpg?raw=true "Physical wreath")

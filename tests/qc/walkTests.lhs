@@ -1,9 +1,14 @@
 Testing Wreath.Walk Library Functions
 ----------------------------------
 
-> module WalkTests where
+> {-# LANGUAGE TemplateHaskell #-}
+
+> module Main where
 > import Wreath.Walk
 > import Test.QuickCheck
+> import Control.Monad(unless)
+> import System.Exit(exitFailure)
+> import Test.QuickCheck.All(quickCheckAll)
 
 **Property-based Tests**
 
@@ -89,3 +94,10 @@ We will generate only singleton lists by passing 1 as the first argument of
 >     forAll (intListList 1 1 n)  $ \xss ->
 >         let cs = choices xss in
 >         (length cs == length (head xss)) && all (== 1) (map length cs)
+
+This main function will scan the source code for function names beginning with "prop_"
+and invoke all of them.
+
+> main = do
+>     allPass <- $quickCheckAll
+>     unless allPass exitFailure

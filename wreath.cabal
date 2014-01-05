@@ -99,7 +99,7 @@ Executable lampWalk
 
 Test-Suite walk-properties
   Type:           exitcode-stdio-1.0
-  Main-Is:        walkTestsMain.lhs
+  Main-Is:        walkTests.lhs
   Buildable:      True
   Build-Depends:  base -any, QuickCheck -any, wreath
   hs-source-dirs: tests/qc
