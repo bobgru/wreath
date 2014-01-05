@@ -1,6 +1,8 @@
 Wreath
 ======
 
+![Travis CI status](https://travis-ci.org/bobgru/wreath.png?branch=master;raw=true)
+
 The Wreath library offers a tiny EDSL for designing a wreath of lights,
 along with a few programs to exercise it. The motivation was a request
 from my wife to make such a thing (a real lighted wreath) combined with
