@@ -21,7 +21,7 @@ or artificial greens added around the lights, but that's beyond the scope of thi
 >               , CandleLampOptions(..)
 >               , flameLamps', FlameLampOptions(..)
 >               , litLamp', crossMarker', LampOptions(..)
->               , diamond, numDiamondPts
+>               , diamond, diamondPoints, numDiamondPts
 >               , flameShape, flameShapePoints
 >               , grid, grid', GridOptions(..))
 > where 
@@ -123,24 +123,30 @@ and `epicycleAngles`.
 >     , flameLampSpacing      :: Double
 >     , flameLampDiamondWidth :: Double
 >     , flameLampVerticalAdj  :: Double
+>     , flameLampHorizAdj     :: Double
+>     , flameLampRotation     :: Turn
 >     , flameLampOptions      :: LampOptions
 >     }
 
 > instance Default FlameLampOptions where
 >     def = FlameLampOptions {
 >       flameLampGetLamps     = litLamp' lo
->     , flameLampLayout       = flameShape s n vAdj
+>     , flameLampLayout       = flameShape s n vAdj hAdj a
 >     , flameLampColor        = yellow
 >     , numFlameLamps         = numDiamondPts n
 >     , flameLampSpacing      = s
 >     , flameLampDiamondWidth = n
 >     , flameLampVerticalAdj  = vAdj
+>     , flameLampHorizAdj     = hAdj
+>     , flameLampRotation     = a
 >     , flameLampOptions      = lo
 >     }
 >         where lo   = def :: LampOptions
 >               s    = 0.15
 >               n    = 3
 >               vAdj = 0.15
+>               hAdj = 0
+>               a    = 1/40
 
 > data WreathOptions = WreathOptions {
 >       wreathInnerRadius :: Double
@@ -433,13 +439,16 @@ as `diamond` or `flameShape`.
 For a diamond shape, _n_ is the number of points across the middle, and _s_ is the distance
 between points. The vertical distance between rows is _s_ * (sqrt 3)/2, or _s_ * 0.866,
 because the rows are offset from each other so that two horizontal points and the point
-above and between them form an equilateral triangle.
+above and between them form an equilateral triangle. The arguments _dy_, _dx_, and _a_
+are, respectively, the vertical adjustment, horizontal adjustment, and rotation of
+the entire collection of points.
 
-**TODO** The diamond shape doesn't recognize the vertical adjustment
-**TODO** the diamond points aren't factored out so can't be used by the lamp tour solver
+> diamond :: Double -> Double -> Double -> Double -> Turn -> Diagram B R2 -> Diagram B R2
+> diamond s n dy dx a d = position (zip ps (repeat d))
+>     where ps = diamondPoints s n dy dx a
 
-> diamond :: Double -> Double -> Diagram B R2 -> Diagram B R2
-> diamond s n d = position (zip ps (repeat d))
+> diamondPoints :: Double -> Double -> Double -> Double -> Turn -> [P2]
+> diamondPoints s n dy dx a = ps # rotateBy a # translateY dy # translateX dx
 >     where ps          = concatMap (mkPts s n) [0..n-1]
 >           mkPts s n 0 =  [p2 (x0 + s * i, 0)  | i <- [0..n-1], let x0 = -s * (n-1) / 2]
 >           mkPts s n j =  concat [[p2 (x0 + s * i, y), p2 (x0 + s * i, -y)]  | i <- [0..n-1-j], 
@@ -455,17 +464,14 @@ to line up with the point below it. Then the entire collection is rotated so tha
 new topmost point is roughly centered but slightly off. It works well for _n_ = 3 but 
 hasn't been tested for any other values.
 
-The arguments are the same, with the addition of _dy_ which is the vertical adjustment
-of the entire shape.
+The arguments are the same as for the diamond shape.
 
-**TODO** the angle of rotation should be put into FlameLampOptions
+> flameShape :: Double -> Double -> Double -> Double -> Turn -> Diagram B R2 -> Diagram B R2
+> flameShape s n dy dx a d = position (zip (flameShapePoints s n dy dx a) (repeat d))
 
-> flameShape :: Double -> Double -> Double -> Diagram B R2 -> Diagram B R2
-> flameShape s n dy d = position (zip (flameShapePoints s n dy) (repeat d))
-
-> flameShapePoints :: Double -> Double -> Double -> [P2]
-> flameShapePoints s n dy = (topPart ++ bottomPart ++ flicker) 
->                         # rotateBy (1/40) # translateY dy 
+> flameShapePoints :: Double -> Double -> Double -> Double -> Turn -> [P2]
+> flameShapePoints s n dy dx a = (topPart ++ bottomPart ++ flicker) 
+>                         # rotateBy a # translateY dy # translateX dx
 >     where
 >           mkPts s n 0 =  [p2 (x0 + s * i, 0)  | i <- [0..n-1], let x0 = -s * (n-1) / 2]
 >           mkPts s n j =  [p2 (x0 + s * i, y)  | i <- [0..n-1-j], 
