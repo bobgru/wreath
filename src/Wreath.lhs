@@ -17,8 +17,8 @@ or artificial greens added around the lights, but that's beyond the scope of thi
 >               , wreath, wreath', WreathOptions(..)
 >               , candleWithFlame, candleWithFlame', CandleWithFlameOptions(..)
 >               , wreathLamps', WreathLampOptions(..), wreathLampPoints
->               , candleLamps6', candleLamps9', CandleLampOptions(..)
 >               , candleLampsClosePack3x', candleLampsClosePack3xPoints
+>               , CandleLampOptions(..)
 >               , flameLamps', FlameLampOptions(..)
 >               , litLamp', crossMarker', LampOptions(..)
 >               , diamond, numDiamondPts
@@ -217,13 +217,13 @@ to create a plan for construction.
 >     , gridHLineStep1  = 1
 >     , gridHLineWidth2 = 0.01
 >     , gridHLineColor2 = lightgray
->     , gridHLineStep2  = (1/12)
+>     , gridHLineStep2  = 1/12
 >     , gridVLineWidth1 = 0.01
 >     , gridVLineColor1 = black
 >     , gridVLineStep1  = 1
 >     , gridVLineWidth2 = 0.01
 >     , gridVLineColor2 = lightgray
->     , gridVLineStep2  = (1/12)
+>     , gridVLineStep2  = 1/12
 >     }
 
 **Assembling the Wreath**
@@ -244,7 +244,7 @@ background to see the effect it would have at night.
 >            -> Diagram B R2
 > litWreath' wo cwfo wlo clo flo = lamps `atop` wrth
 >     where lamps =  wreathLamps' wlo #  centerXY
->                 <> (candleLampLayout clo) clo
+>                 <> candleLampLayout clo clo
 >                 <> flameLamps' flo
 >           wrth  =  wreath' wo
 >                 <> candleWithFlame' cwfo 
@@ -266,7 +266,7 @@ with line width and color options.
 >           <> lines (gridVLineWidth1 go) (gridVLineColor1 go) vertical   unitX tickBigXs
 >           <> lines (gridHLineWidth2 go) (gridHLineColor2 go) horizontal unitY tickYs
 >           <> lines (gridVLineWidth2 go) (gridVLineColor2 go) vertical   unitX tickXs
->     where lines w c f v ss = mconcat (map (lw w . lc c . flip translate f) (map (*^ v) ss))
+>     where lines w c f v ss = mconcat (map ((lw w . lc c . flip translate f) . (*^ v)) ss)
 
 >           w          = gridWidth go
 >           h          = gridHeight go
@@ -297,7 +297,7 @@ hidden and the candle extended into a diameter of the wreath.
 > wreath r1 r2    =  wreath' (def  {wreathOuterRadius = r1, wreathInnerRadius = r2})
 
 > wreath' :: WreathOptions -> Diagram B R2
-> wreath' o =  if (wreathFill o) 
+> wreath' o =  if wreathFill o
 >                  then d #  fc (wreathFillColor o)  # fillRule EvenOdd
 >                  else d
 >     where d = stroke (ring (wreathOuterRadius o) (wreathInnerRadius o))
@@ -310,7 +310,7 @@ hidden and the candle extended into a diameter of the wreath.
 > candleWithFlame =  candleWithFlame' def 
 
 > candleWithFlame' :: CandleWithFlameOptions -> Diagram B R2
-> candleWithFlame' o =  if (candleWithFlameFill o)
+> candleWithFlame' o =  if candleWithFlameFill o
 >                           then d #  fc (candleWithFlameFillColor o)
 >                           else d
 >     where d =  (square (candleSize o)
@@ -333,7 +333,7 @@ given radii, then dislodged slightly.
 >     where rs    = wreathLampRadii wlo
 >           ss    = wreathLampSalt wlo
 >           n     = numWreathLamps wlo
->           db    = tau * (sum rs) / fromIntegral n
+>           db    = tau * sum rs / fromIntegral n
 >           ns'   = [floor (tau * r / db) | r <- init rs]
 >           ns    = ns' ++ [n - sum ns']
 >           rings = zip3 ns rs ss
@@ -361,7 +361,7 @@ intentionally not sorted.
 > dislocate (a,t)     = a *^ unitX # rotateBy t
 
 > epicycles :: [Double] -> [Turn] -> [R2]
-> epicycles amps angs = map dislocate (zip (cycle amps) (cycle angs))
+> epicycles amps angs = zipWith (curry dislocate) (cycle amps) (cycle angs)
 
 Simulate a light as a small circle of color, and turn it on by giving it
 a soft glow.
@@ -397,35 +397,11 @@ i.e. applied before interpolation; and _d_ is the diagram to augment with glow.
 
 > withGlow :: Double -> Int -> Double -> Double -> Diagram B R2 -> Diagram B R2
 > withGlow grr n o i d =  d <> mconcat (take n (iterate (scale grr' # opacity o) d'))
->     where grr' = grr `to_the` (1 / fromIntegral n)
+>     where grr' = grr `toThe` (1 / fromIntegral n)
 >           d'   = d # opacity i
 
-> to_the :: Floating a => a -> a -> a
-> x `to_the` y = exp (y * (log x))
-
-The candle's lamps are packed into a rectangle with `candleLamps6'` and `candleLamps9'`.
-The number of lamps is hardcoded to 6 and 9, respectively. The spacing can be adjusted
-via the arguments.
-
-**TODO** This is an obvious place for abstraction.
-
-> candleLamps6'     :: CandleLampOptions -> Diagram B R2
-> candleLamps6' clo =  position (zip pts (repeat (getLamp c))) # translateY vAdj
->     where pts     = [ p2 (x, y) | y <- [0, dy, dy*2], x <- [-dx, dx] ]
->           getLamp = candleLampGetLamps clo
->           c       = candleLampColor clo
->           dx      = candleLampSpacingX clo
->           dy      = candleLampSpacingY clo
->           vAdj    = candleLampVerticalAdj clo
-
-> candleLamps9'     :: CandleLampOptions -> Diagram B R2
-> candleLamps9' clo =  position (zip pts (repeat (getLamp c))) # translateY vAdj
->     where pts     = [ p2 (x, y) | y <- [0, dy, dy*2], x <- [-dx, 0, dx] ]
->           getLamp = candleLampGetLamps clo
->           c       = candleLampColor clo
->           dx      = candleLampSpacingX clo
->           dy      = candleLampSpacingY clo
->           vAdj    = candleLampVerticalAdj clo
+> toThe :: Floating a => a -> a -> a
+> x `toThe` y = exp (y * log x)
 
 With `candleLampsClosePack3x'`, the lamps are close-packed into three columns,
 where _n_ is the number of vertical layers in the stack.
@@ -464,7 +440,7 @@ above and between them form an equilateral triangle.
 
 > diamond :: Double -> Double -> Diagram B R2 -> Diagram B R2
 > diamond s n d = position (zip ps (repeat d))
->     where ps          = concat $ map (mkPts s n) [0..n-1]
+>     where ps          = concatMap (mkPts s n) [0..n-1]
 >           mkPts s n 0 =  [p2 (x0 + s * i, 0)  | i <- [0..n-1], let x0 = -s * (n-1) / 2]
 >           mkPts s n j =  concat [[p2 (x0 + s * i, y), p2 (x0 + s * i, -y)]  | i <- [0..n-1-j], 
 >                              let x0 = -s * (n-1-j) / 2, let y = s * j * 0.866]
@@ -496,8 +472,8 @@ of the entire shape.
 >                              let x0 = -s * (n-1-j) / 2, let y = s * j * 0.866]
 >           mkPts' s n j = [p2 (x0 + s * i, -y) | i <- [0..n-1-j], 
 >                              let x0 = -s * (n-1-j) / 2, let y = s * j * 0.866]
->           topPart    = concat (map (mkPts  s n) [0..n-1])
->           bottomPart = concat (map (mkPts' s n) [1..n-2])
+>           topPart    = concatMap (mkPts  s n) [0..n-1]
+>           bottomPart = concatMap (mkPts' s n) [1..n-2]
 >           flicker    = [p2 (x, y')]
->               where  (x,y) = unp2 (last (init (topPart)))
+>               where  (x,y) = unp2 (last (init topPart))
 >                      y' = y + 2 * s * 0.866

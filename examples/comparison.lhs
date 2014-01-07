@@ -31,8 +31,8 @@ to fit the largest diagram.
 >         ds'     = map centerXY ds
 >         box     = e # scale boxSize
 >         boxSize = boxAll ds'
->         boxAll  = maximum . (map box1)
->         box1 d  = map (flip diameter d) [unitX, unitY] # maximum
+>         boxAll  = maximum . map box1
+>         box1 d  = map (`diameter` d) [unitX, unitY] # maximum
 
 > chunk n [] = []
 > chunk n xs = take n xs : chunk n (drop n xs)
