@@ -1,9 +1,9 @@
-A Lighted Christmas Wreath
-==========================
+A Lighted Wreath
+================
 
 **Introduction**
 
-This project is to model a Christmas wreath with embedded colored lights, to help
+This project is to model a wreath with embedded colored lights, to help
 determine where to drill holes for the lights to protrude from the back. The wreath
 will be cut from plywood, with a symbolic candle and flame rising from the bottom.
 The flame will get yellow bulbs, the candle white ones, and the rest of the total of
@@ -363,7 +363,7 @@ intentionally not sorted.
 > epicycles :: [Double] -> [Turn] -> [R2]
 > epicycles amps angs = map dislocate (zip (cycle amps) (cycle angs))
 
-Simulate a Christmas light as a small circle of color, and turn it on by giving it
+Simulate a light as a small circle of color, and turn it on by giving it
 a soft glow.
 
 > lamp :: Double -> Colour Double -> Diagram B R2

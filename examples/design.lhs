@@ -1,5 +1,5 @@
-A Plan for Building a Christmas Wreath
-======================================
+A Plan for Building a Lighted Wreath
+====================================
 
 This program overrides the default values of all wreath options is such a way as
 to produce a precise engineering drawing (except for the lack of labels). The
@@ -11,7 +11,7 @@ scale is 1 square per inch.
 > import Diagrams.Backend.SVG.CmdLine
 > import Data.Default.Class
 
-Run the program with `dist/build/wreathPlan/wreathPlan -o wreath.svg -w 400` 
+Run the program with `dist/build/design/design -o design.svg -w 400` 
 where `-o` sets the output filename, and `-w` sets the diagram width.
 
 > main = defaultMain plan

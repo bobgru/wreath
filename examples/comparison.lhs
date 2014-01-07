@@ -1,5 +1,5 @@
-A Wreath Array
-=============
+A Wreath Comparison
+===================
 
 This program draws 15 wreaths in a 3 x 5 grid, changing the "salt" parameter of
 the middle ring of lights on the wreath, so as to visually compare them.
@@ -10,7 +10,7 @@ the middle ring of lights on the wreath, so as to visually compare them.
 > import Data.Default.Class
 > import Diagrams.Backend.SVG.CmdLine
 
-Run the program with `dist/build/wreathArray/wreathArray -o wreath.svg -w 400` 
+Run the program with `dist/build/comparison/comparison -o comparison.svg -w 400` 
 where `-o` sets the output filename, and `-w` sets the diagram width.
 
 > main = defaultMain wreathArray
