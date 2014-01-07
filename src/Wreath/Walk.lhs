@@ -245,7 +245,7 @@ in the encoding of subdivision into quadrants with three bridges per bridge set.
 
 Now we have to give the specific points, including starting and ending points.
 The `Wreath` library exposes functions to get the points for the flame, the candle,
-and the wreath. We will invoke these functions in the same way the `litWreath`
+and the wreath. We will invoke these functions in the same way the `simulation`
 program does (i.e. with all the default values for parameters), combining the
 flame and candle, but subdividing the wreath.
 
