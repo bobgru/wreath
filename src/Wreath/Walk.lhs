@@ -37,8 +37,8 @@ with it.
 
 The problem is exponential in the number of lamps, being an instance of TSP.
 Finding the optimal, i.e. longest, walk would require finding all walks, which
-is not feasible with 100 lamps. Instead, we will take a greedy approach--using
-the longest available move at each step--to solve a specified  number of walks, and 
+is not feasible with 100 lamps. Instead, we will take a greedy approach—using
+the longest available move at each step—to solve a specified  number of walks, and 
 take the longest. At the same time, we will subdivide the lamps into smaller
 walks which connect to each other to form the overall walk.
 
@@ -187,7 +187,7 @@ evaluating walks for validity, so we can use the squared distance metric.
 > ok a b = distanceSq a b <= maxWalkLeg^2
 
 The maximum distance between lamps should be as low as will allow for walks.
-A value of 5.5" is too low--there are no valid walks with that constraint
+A value of 5.5" is too low—there are no valid walks with that constraint
 (for the current default wreath parameters). However, 5.6" does allow walks.
 The wreath parameters are expressed in feet, so divide by 12.
 
@@ -213,7 +213,7 @@ Allow the lazy consumer to specify how many walks to evaluate.
 >     Just ws -> Just (take n ws)
 
 In searching for valid walks, we need to deal with the possibility that a partial
-walk is a dead end--no remaining points satisfy the constraints. We will implement
+walk is a dead end—no remaining points satisfy the constraints. We will implement
 a backtracking search, in which we have a partial walk and the valid next moves,
 working down the list as long as requested.
 
