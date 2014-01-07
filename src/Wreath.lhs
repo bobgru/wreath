@@ -123,24 +123,27 @@ and `epicycleAngles`.
 >     , flameLampSpacing      :: Double
 >     , flameLampDiamondWidth :: Double
 >     , flameLampVerticalAdj  :: Double
+>     , flameLampRotation     :: Turn
 >     , flameLampOptions      :: LampOptions
 >     }
 
 > instance Default FlameLampOptions where
 >     def = FlameLampOptions {
 >       flameLampGetLamps     = litLamp' lo
->     , flameLampLayout       = flameShape s n vAdj
+>     , flameLampLayout       = flameShape s n vAdj a
 >     , flameLampColor        = yellow
 >     , numFlameLamps         = numDiamondPts n
 >     , flameLampSpacing      = s
 >     , flameLampDiamondWidth = n
 >     , flameLampVerticalAdj  = vAdj
+>     , flameLampRotation     = a
 >     , flameLampOptions      = lo
 >     }
 >         where lo   = def :: LampOptions
 >               s    = 0.15
 >               n    = 3
 >               vAdj = 0.15
+>               a    = 1/40
 
 > data WreathOptions = WreathOptions {
 >       wreathInnerRadius :: Double
@@ -456,16 +459,14 @@ new topmost point is roughly centered but slightly off. It works well for _n_ = 
 hasn't been tested for any other values.
 
 The arguments are the same, with the addition of _dy_ which is the vertical adjustment
-of the entire shape.
+of the entire shape, and _a_, which is the angle of rotation.
 
-**TODO** the angle of rotation should be put into FlameLampOptions
+> flameShape :: Double -> Double -> Double -> Turn -> Diagram B R2 -> Diagram B R2
+> flameShape s n dy a d = position (zip (flameShapePoints s n dy a) (repeat d))
 
-> flameShape :: Double -> Double -> Double -> Diagram B R2 -> Diagram B R2
-> flameShape s n dy d = position (zip (flameShapePoints s n dy) (repeat d))
-
-> flameShapePoints :: Double -> Double -> Double -> [P2]
-> flameShapePoints s n dy = (topPart ++ bottomPart ++ flicker) 
->                         # rotateBy (1/40) # translateY dy 
+> flameShapePoints :: Double -> Double -> Double -> Turn -> [P2]
+> flameShapePoints s n dy a = (topPart ++ bottomPart ++ flicker) 
+>                         # rotateBy a # translateY dy 
 >     where
 >           mkPts s n 0 =  [p2 (x0 + s * i, 0)  | i <- [0..n-1], let x0 = -s * (n-1) / 2]
 >           mkPts s n j =  [p2 (x0 + s * i, y)  | i <- [0..n-1-j], 
