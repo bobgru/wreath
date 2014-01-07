@@ -64,7 +64,7 @@ I will try to factor out the problem-independent parts.
 > import Diagrams.Backend.SVG.CmdLine
 > import Diagrams.Prelude
 > import Data.List ((\\), sort)
-> import Data.Maybe (fromJust)
+> import Data.Maybe (fromJust,isNothing)
 > import Data.Default.Class
 > import Text.Printf
 > import System.Exit(exitFailure)
@@ -98,7 +98,7 @@ and a bridge set, arrange the legs of an itinerary for the entire walk.
 >           (p1, p2) = bridgePts b1
 >           (p3, p4) = bridgePts b2
 >           (p5, p6) = bridgePts b3
->           quadPts s qs = ((map snd . filter (\(q,_)->q==q')) qs) \\ [s]
+>           quadPts s qs = (map snd . filter (\(q,_)->q==q')) qs \\ [s]
 >               where q' = quadrant s
 >           ps1 = quadPts s  qs
 >           ps2 = quadPts p2 qs
@@ -113,7 +113,7 @@ generate the list of all possible combinations and rely on a lazy consumer.
 > bridgeSets qo qs = map (\[x,y,z]->(x,y,z)) bs'
 >     where bs     = [bridges q1 q2 qs | (q1, q2) <- qpairs]
 >           qpairs = zip (init qo) (tail qo)
->           bs'    = choices [(bs !! 0), (bs !! 1), (bs !! 2)]
+>           bs'    = choices [head bs, bs !! 1, bs !! 2]
 
 The `bridgeSets` function returns all possible sets of bridge choices, one bridge per
 pair of quadrants. The bulk of that work is to enumerate the choices, which is a
@@ -225,8 +225,8 @@ but the ending point is.
 > allWalks' w (s, e, [x]) = if e == x && ok s e then Just [w++[e]] else Nothing
 > allWalks' w (s, e, ps)  =
 >     if null ps' then Nothing
->                 else Just ((concat . map fromJust . filter (/= Nothing)) ws)
->     where ws  = map (\(d,p) -> (allWalks' (w++[p]) (p, e, (ps\\[p])))) ps'
+>                 else Just ((concatMap fromJust . filter (/= Nothing)) ws)
+>     where ws  = map (\(d,p) -> (allWalks' (w++[p]) (p, e, ps\\[p]))) ps'
 >           ps' = nextMoves s ps
 
 After we get our valid walks, order them best to worst, annotating with
@@ -380,12 +380,12 @@ the circles.
 > lampWalkMain = do
 >     let w1 = candleFlameWalk 100000
 >     let w2 = wreathWalk 100000
->     if w1 == Nothing || w2 == Nothing
+>     if isNothing w1 || isNothing w2
 >         then do
 >             putStrLn "There are no walks"
 >             exitFailure 
 >         else do 
 >             let w1' = (snd . head . fromJust) w1
 >             let w2' = (snd . head . fromJust) w2
->             defaultMain ((showWalk (w1' ++ w2')) # pad 1.1)
+>             defaultMain (showWalk (w1' ++ w2') # pad 1.1)
 
