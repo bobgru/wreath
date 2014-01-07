@@ -439,7 +439,9 @@ as `diamond` or `flameShape`.
 For a diamond shape, _n_ is the number of points across the middle, and _s_ is the distance
 between points. The vertical distance between rows is _s_ * (sqrt 3)/2, or _s_ * 0.866,
 because the rows are offset from each other so that two horizontal points and the point
-above and between them form an equilateral triangle.
+above and between them form an equilateral triangle. The arguments _dy_, _dx_, and _a_
+are, respectively, the vertical adjustment, horizontal adjustment, and rotation of
+the entire collection of points.
 
 > diamond :: Double -> Double -> Double -> Double -> Turn -> Diagram B R2 -> Diagram B R2
 > diamond s n dy dx a d = position (zip ps (repeat d))
@@ -462,8 +464,7 @@ to line up with the point below it. Then the entire collection is rotated so tha
 new topmost point is roughly centered but slightly off. It works well for _n_ = 3 but 
 hasn't been tested for any other values.
 
-The arguments are the same, with the addition of _dy_ which is the vertical adjustment
-of the entire shape, and _a_, which is the angle of rotation.
+The arguments are the same as for the diamond shape.
 
 > flameShape :: Double -> Double -> Double -> Double -> Turn -> Diagram B R2 -> Diagram B R2
 > flameShape s n dy dx a d = position (zip (flameShapePoints s n dy dx a) (repeat d))
