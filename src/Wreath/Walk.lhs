@@ -266,10 +266,11 @@ leg for the wreath walk.
 >           ps' = ps \\ [s]
 
 > flamePts :: [P2]
-> flamePts =  flameShapePoints s n vAdj a
+> flamePts =  flameShapePoints s n vAdj hAdj a
 >     where s    = flameLampSpacing def
 >           n    = flameLampDiamondWidth def
 >           vAdj = flameLampVerticalAdj def
+>           hAdj = flameLampHorizAdj def
 >           a    = flameLampRotation def
 
 > candlePts :: [P2]
