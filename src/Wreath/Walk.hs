@@ -185,31 +185,37 @@ quadrantOrder s e = [q1, q2, q3, q4]
 -- evaluating walks for validity, so we can use the squared distance metric.
 
 ok :: P2 Double -> P2 Double -> Bool
-ok a b = quadrance' a b <= maxWalkLeg^2
+ok = ok' maxWalkLeg
+
+ok' :: Double -> P2 Double -> P2 Double -> Bool
+ok' m a b = quadrance' a b <= m^2
 
 -- The maximum distance between lamps should be as low as will allow for walks.
 -- A value of 5.5" is too low—there are no valid walks with that constraint
 -- (for the current default wreath parameters). However, 5.6" does allow walks.
 -- The wreath parameters are expressed in feet, so divide by 12.
 
-maxWalkLeg = 5.6 / 12 :: Double  -- expressed in feet
+-- maxWalkLeg = 5.6 / 12 :: Double  -- expressed in feet
+maxWalkLeg = mkMaxWalkLeg 5.6  -- expressed in feet
+
+mkMaxWalkLeg n = 50 * n / 12 :: Double
 
 -- At each step, we find all available moves and take the longest.
 
-nextMoves :: P2 Double -> [P2 Double] -> [(Double,P2 Double)]
-nextMoves s ps =  (reverse . sort) [(d,p) | p <- ps, ok s p, let d = quadrance' s p]
+nextMoves :: Double -> P2 Double -> [P2 Double] -> [(Double,P2 Double)]
+nextMoves m s ps =  (reverse . sort) [(d,p) | p <- ps, ok' m s p, let d = quadrance' s p]
 
 -- Enumerate all valid walks for a given leg. We'll delegate to another version
 -- of the function that accumulates subwalks. Allow for failure to find a walk,
 -- indicated by evaluating to `Nothing`.
 
-allWalks :: Leg -> Maybe [Walk]
-allWalks (s, e, ps) = allWalks' [s] (s, e, ps)
+allWalks :: Double -> Leg -> Maybe [Walk]
+allWalks m (s, e, ps) = allWalks' m [s] (s, e, ps)
 
 -- Allow the lazy consumer to specify how many walks to evaluate.
 
-someWalks :: Int -> Leg -> Maybe [Walk]
-someWalks n (s, e, ps) = case allWalks (s, e, ps) of
+someWalks :: Double -> Int -> Leg -> Maybe [Walk]
+someWalks m n (s, e, ps) = case allWalks m (s, e, ps) of
     Nothing -> Nothing
     Just ws -> Just (take n ws)
 
@@ -221,14 +227,14 @@ someWalks n (s, e, ps) = case allWalks (s, e, ps) of
 -- Note that the starting point is not included in the set of points to walk through,
 -- but the ending point is.
 
-allWalks' :: Walk -> Leg -> Maybe [Walk]
-allWalks' _ (_, _, [])  = Nothing
-allWalks' w (s, e, [x]) = if e == x && ok s e then Just [w++[e]] else Nothing
-allWalks' w (s, e, ps)  =
+allWalks' :: Double -> Walk -> Leg -> Maybe [Walk]
+allWalks' _ _ (_, _, [])  = Nothing
+allWalks' m w (s, e, [x]) = if e == x && ok' m s e then Just [w++[e]] else Nothing
+allWalks' m w (s, e, ps)  =
     if null ps' then Nothing
                 else Just ((concatMap fromJust . filter (/= Nothing)) ws)
-    where ws  = map (\(d,p) -> (allWalks' (w++[p]) (p, e, ps\\[p]))) ps'
-          ps' = nextMoves s ps
+    where ws  = map (\(d,p) -> (allWalks' m (w++[p]) (p, e, ps\\[p]))) ps'
+          ps' = nextMoves m s ps
 
 -- After we get our valid walks, order them best to worst, annotating with
 -- the walk lengths.
@@ -259,31 +265,40 @@ walkLength w = sum (zipWith quadrance' (init w) (tail w))
 -- be the lowest point on the wreath. At this point we are just creating the overall
 -- leg for the wreath walk.
 
-candleFlamePts :: Leg
-candleFlamePts = (s, e, ps')
-    where ps  = candlePts ++ flamePts
+scalePts s = map (^* s)
+
+flamePts :: Leg
+flamePts = (s, e, ps')
+    where ps  = scalePts 50 $ flamePts'
           s   = maxY ps
           e   = minY ps
           ps' = ps \\ [s]
 
-flamePts :: [P2 Double]
-flamePts =  flameShapePoints s n vAdj hAdj a
+candlePts :: Leg
+candlePts = (s, e, ps')
+    where ps  = scalePts 50 $ candlePts'
+          s   = maxY ps
+          e   = minY ps
+          ps' = ps \\ [s]
+
+flamePts' :: [P2 Double]
+flamePts' =  flameShapePoints s n vAdj hAdj a
     where s    = flameLampSpacing def
           n    = flameLampDiamondWidth def
           vAdj = flameLampVerticalAdj def
           hAdj = flameLampHorizAdj def
           a    = flameLampRotation def
 
-candlePts :: [P2 Double]
-candlePts =  candleLampsClosePack3xPoints 6 def
+candlePts' :: [P2 Double]
+candlePts' =  candleLampsClosePack3xPoints 6 def
 
 wreathLampPts :: Leg
 wreathLampPts = (s, e, ps')
-    where ps  = wreathLampPoints def
+    where ps  = scalePts 50 $ wreathLampPoints def
           s   = closestTo e0 ps
           e   = minY ps
           ps' = ps \\ [s]
-          (_, e0, _) = candleFlamePts
+          (_, e0, _) = candlePts
 
 maxY :: [P2 Double] -> P2 Double
 maxY = p2 . swap . last . sort . map (swap . unp2)
@@ -304,8 +319,13 @@ quadrance' p q = quadrance $ p .-. q
 -- Ask for the best of the first _n_ valid walks through the flame and candle
 -- we can find.
 
-candleFlameWalk :: Int -> Maybe [(Double, Walk)]
-candleFlameWalk n = case someWalks n candleFlamePts of
+flameWalk :: Int -> Maybe [(Double, Walk)]
+flameWalk n = case someWalks (mkMaxWalkLeg 3.0) n flamePts of
+    Nothing  -> Nothing
+    Just ws -> Just (best ws)
+
+candleWalk :: Int -> Maybe [(Double, Walk)]
+candleWalk n = case someWalks (mkMaxWalkLeg 3.0) n candlePts of
     Nothing  -> Nothing
     Just ws -> Just (best ws)
 
@@ -320,7 +340,7 @@ wreathWalk n = if null ws then Nothing else Just (best ws)
 -- Given an itinerary, find the first walk for each leg.
 
 subWalks :: Itinerary -> [Maybe [Walk]]
-subWalks = map (someWalks 1)
+subWalks = map (someWalks (mkMaxWalkLeg 5.6) 1)
 
 -- Given an itinerary, try to find a walk for each leg. If any leg fails,
 -- report failure for the whole itinerary.
@@ -355,12 +375,12 @@ fmtAll = map fmt
 -- walk to create a diagram showing it as numbered points with arrows.
 
 node :: Int -> Diagram B
-node n =  text (show n) # fc black # scale s
-       <> circle s      # fc white # named n
-    where s = 0.04
+node n =  text (show n) # fontSizeL s # fc black
+       <> circle s                    # fc white # lwL 0.1 # named n
+    where s = 3
 
 arrowOpts :: ArrowOpts Double
-arrowOpts = with & headLength .~ verySmall
+arrowOpts = with & headLength .~ verySmall & shaftStyle %~ lw thin
 
 -- The duplicated positioning of nodes is intentional. The `applyAll` causes arrows to be
 -- drawn on top of the numbered nodes, so I draw the nodes first, then draw the nodes with 
@@ -383,15 +403,15 @@ showWalk w = ds `atop` ds # applyAll (arrowFuncs (length w))
 
 lampWalkMain :: IO ()
 lampWalkMain = do
---     let w1 = candleFlameWalk 100000
---     let w2 = wreathWalk 100000
-    let w1 = candleFlameWalk 1
-    let w2 = wreathWalk 1
-    if isNothing w1 || isNothing w2
+    let w1 = flameWalk 1000000
+        w2 = candleWalk 1000000
+        w3 = wreathWalk 1
+    if isNothing w1 || isNothing w2 || isNothing w3
         then do
             putStrLn "There are no walks"
             exitFailure 
         else do 
             let w1' = (snd . head . fromJust) w1
-            let w2' = (snd . head . fromJust) w2
-            defaultMain (showWalk (w1' ++ w2') # pad 1.1)
+                w2' = (snd . head . fromJust) w2
+                w3' = (snd . head . fromJust) w3
+            defaultMain (showWalk (w1' <> w2' <> w3') # pad 1.1)
