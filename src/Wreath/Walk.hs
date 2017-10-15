@@ -135,7 +135,7 @@ choices (xs:xss) = case xs of
 -- could just as reasonably sort in the reverse order, or not sort at all.
 
 bridges :: Int -> Int -> [(Int, P2 Double)] -> [Bridge]
-bridges q1 q2 qs = sort [ (distance p1 p2, p1, p2)
+bridges q1 q2 qs = sort [ (quadrance' p1 p2, p1, p2)
                             | p1 <- (map snd . filter (\(q,p)->q==q1)) qs
                             , p2 <- (map snd . filter (\(q,p)->q==q2)) qs
                             , ok p1 p2 ]
@@ -185,19 +185,19 @@ quadrantOrder s e = [q1, q2, q3, q4]
 -- evaluating walks for validity, so we can use the squared distance metric.
 
 ok :: P2 Double -> P2 Double -> Bool
-ok a b = distance a b <= maxWalkLeg^2
+ok a b = quadrance' a b <= maxWalkLeg^2
 
 -- The maximum distance between lamps should be as low as will allow for walks.
 -- A value of 5.5" is too low—there are no valid walks with that constraint
 -- (for the current default wreath parameters). However, 5.6" does allow walks.
 -- The wreath parameters are expressed in feet, so divide by 12.
 
-maxWalkLeg = 5.7 / 12 :: Double  -- expressed in feet
+maxWalkLeg = 5.6 / 12 :: Double  -- expressed in feet
 
 -- At each step, we find all available moves and take the longest.
 
 nextMoves :: P2 Double -> [P2 Double] -> [(Double,P2 Double)]
-nextMoves s ps =  (reverse . sort) [(d,p) | p <- ps, ok s p, let d = distance s p]
+nextMoves s ps =  (reverse . sort) [(d,p) | p <- ps, ok s p, let d = quadrance' s p]
 
 -- Enumerate all valid walks for a given leg. We'll delegate to another version
 -- of the function that accumulates subwalks. Allow for failure to find a walk,
@@ -237,7 +237,7 @@ best :: [Walk] -> [(Double, Walk)]
 best = reverse . sort . map (\w -> (walkLength w, w))
 
 walkLength :: Walk -> Double
-walkLength w = sum (zipWith distance (init w) (tail w))
+walkLength w = sum (zipWith quadrance' (init w) (tail w))
 
 -- **Points**
 -- 
@@ -294,7 +294,9 @@ minY = p2 . swap . head . sort . map (swap . unp2)
     where swap~(a,b) = (b,a)
 
 closestTo :: P2 Double -> [P2 Double] -> P2 Double
-closestTo p ps = snd (minimum [(distance p p', p') | p' <- ps])
+closestTo p ps = snd (minimum [(quadrance' p p', p') | p' <- ps])
+
+quadrance' p q = quadrance $ p .-. q
 
 -- **Solution**
 -- 
@@ -358,7 +360,7 @@ node n =  text (show n) # fc black # scale s
     where s = 0.04
 
 arrowOpts :: ArrowOpts Double
-arrowOpts = with & headLength .~ normal
+arrowOpts = with & headLength .~ verySmall
 
 -- The duplicated positioning of nodes is intentional. The `applyAll` causes arrows to be
 -- drawn on top of the numbered nodes, so I draw the nodes first, then draw the nodes with 
@@ -381,8 +383,10 @@ showWalk w = ds `atop` ds # applyAll (arrowFuncs (length w))
 
 lampWalkMain :: IO ()
 lampWalkMain = do
-    let w1 = candleFlameWalk 100000
-    let w2 = wreathWalk 100000
+--     let w1 = candleFlameWalk 100000
+--     let w2 = wreathWalk 100000
+    let w1 = candleFlameWalk 1
+    let w2 = wreathWalk 1
     if isNothing w1 || isNothing w2
         then do
             putStrLn "There are no walks"
@@ -391,4 +395,3 @@ lampWalkMain = do
             let w1' = (snd . head . fromJust) w1
             let w2' = (snd . head . fromJust) w2
             defaultMain (showWalk (w1' ++ w2') # pad 1.1)
-
