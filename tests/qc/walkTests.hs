@@ -47,15 +47,20 @@ intListList m l h = mapM (\i -> intList l h) [1..m]
 -- `(not . elem) [] xss || choices xss == []`. We'll do the latter, keeping the
 -- lists to 5 _x_ 5 or smaller.
 
-prop_choicesWithNil :: Int -> Property
-prop_choicesWithNil n = (n >= 1 && n <= 5) ==> do
+data Int1To5 = Int1To5 Int deriving (Show, Eq)
+
+instance Arbitrary Int1To5 where
+  arbitrary = choose (1, 5) >>= return . Int1To5
+
+prop_choicesWithNil :: Int1To5 -> Property
+prop_choicesWithNil (Int1To5 n) = do
     forAll (intListList 5 0 n)  $ \xss -> 
         (not ([] `elem` xss)) || null (choices xss)
 
 -- * The length of `choices xss` is the product of the lengths of the members of _xss_.
 
-prop_choicesLengthIsLengthProduct :: Int -> Property
-prop_choicesLengthIsLengthProduct n = (n >= 1 && n <= 5) ==> do
+prop_choicesLengthIsLengthProduct :: Int1To5 -> Property
+prop_choicesLengthIsLengthProduct (Int1To5 n) = do
     forAll (intListList 5 0 n)  $ \xss ->
         length (choices xss) == product (map length xss)
 
@@ -70,8 +75,8 @@ prop_choicesLengthIsLengthProduct n = (n >= 1 && n <= 5) ==> do
 -- * If `head (head xss)` is not unique within the union of the members of _xss_
 --   then the property does not hold, so we fix _xss_ to avoid that condition.
 
-prop_choicesHeadCountIsTailLengthProduct :: Int -> Property
-prop_choicesHeadCountIsTailLengthProduct n = (n >= 1 && n <= 5) ==> do
+prop_choicesHeadCountIsTailLengthProduct :: Int1To5 -> Property
+prop_choicesHeadCountIsTailLengthProduct (Int1To5 n) = do
     forAll (intListList 5 1 n)  $ \xss ->
         let cs  = choices (fix xss)
             h   = (head . head) cs
@@ -85,8 +90,8 @@ prop_choicesHeadCountIsTailLengthProduct n = (n >= 1 && n <= 5) ==> do
 -- We will generate only singleton lists by passing 1 as the first argument of
 -- `intListList`.
 
-prop_choicesSingletons :: Int -> Property
-prop_choicesSingletons n = (n >= 1 && n <= 5) ==> do
+prop_choicesSingletons :: Int1To5 -> Property
+prop_choicesSingletons (Int1To5 n) = do
     forAll (intListList 1 1 n)  $ \xss ->
         let cs = choices xss in
         (length cs == length (head xss)) && all (== 1) (map length cs)
