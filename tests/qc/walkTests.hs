@@ -50,7 +50,7 @@ intListList m l h = mapM (\i -> intList l h) [1..m]
 data Int1To5 = Int1To5 Int deriving (Show, Eq)
 
 instance Arbitrary Int1To5 where
-  arbitrary = choose (1, 5) >>= return . Int1To5
+  arbitrary = Int1To5 <$> choose (1, 5)
 
 prop_choicesWithNil :: Int1To5 -> Property
 prop_choicesWithNil (Int1To5 n) = do
